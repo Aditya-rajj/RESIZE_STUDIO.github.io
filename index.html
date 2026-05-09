@@ -1,240 +1,1043 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Resize Studio | Premium Image Utility</title>
-    <link rel="stylesheet" href="style.css">
-    
-    <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0" rel="stylesheet" />
+<meta charset="UTF-8" />
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+/>
+
+<title>Resize Studio — Premium Image Utility</title>
+
+<meta
+    name="description"
+    content="Premium privacy-first image compression utility."
+/>
+
+<meta name="theme-color" content="#070b14" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+<link
+    href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet"
+/>
+
+<link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,1,0"
+    rel="stylesheet"
+/>
+
+<style>
+
+:root {
+
+    --bg: #070b14;
+
+    --surface: rgba(255,255,255,0.05);
+
+    --surface-hover: rgba(255,255,255,0.08);
+
+    --border: rgba(255,255,255,0.08);
+
+    --primary: #7c4dff;
+
+    --primary-light: #9b7cff;
+
+    --text: #f5f7ff;
+
+    --muted: #9ba3b4;
+
+    --shadow:
+        0 10px 40px rgba(0,0,0,0.45);
+
+    --radius: 28px;
+}
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+html{
+    scroll-behavior:smooth;
+}
+
+body{
+
+    font-family:'Jost',sans-serif;
+
+    background:
+        radial-gradient(circle at top left,#1e1b4b 0%,transparent 35%),
+        radial-gradient(circle at bottom right,#312e81 0%,transparent 35%),
+        var(--bg);
+
+    color:var(--text);
+
+    min-height:100vh;
+
+    overflow-x:hidden;
+
+    padding:20px;
+}
+
+body::after{
+
+    content:"";
+
+    position:fixed;
+    inset:0;
+
+    pointer-events:none;
+
+    opacity:.03;
+
+    background-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cg fill='%23ffffff'%3E%3Ccircle cx='3' cy='3' r='1'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+.bg-orb{
+
+    position:fixed;
+
+    border-radius:50%;
+
+    filter:blur(100px);
+
+    z-index:-2;
+
+    opacity:.35;
+}
+
+.orb-1{
+
+    width:400px;
+    height:400px;
+
+    background:#7c4dff;
+
+    top:-120px;
+    left:-120px;
+
+    animation:float1 16s infinite ease-in-out;
+}
+
+.orb-2{
+
+    width:350px;
+    height:350px;
+
+    background:#00c2ff;
+
+    bottom:-120px;
+    right:-120px;
+
+    animation:float2 18s infinite ease-in-out;
+}
+
+@keyframes float1{
+    50%{
+        transform:translateY(-20px) scale(1.05);
+    }
+}
+
+@keyframes float2{
+    50%{
+        transform:translateY(20px) scale(1.08);
+    }
+}
+
+.island-header{
+
+    position:sticky;
+
+    top:14px;
+
+    z-index:1000;
+
+    margin:auto auto 24px auto;
+
+    width:min(100%,1100px);
+
+    padding:18px 22px;
+
+    border-radius:24px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    background:rgba(15,17,25,.65);
+
+    backdrop-filter:blur(24px);
+
+    border:1px solid rgba(255,255,255,.08);
+
+    box-shadow:
+        0 8px 40px rgba(0,0,0,.35),
+        inset 0 1px 0 rgba(255,255,255,.05);
+}
+
+.logo{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:12px;
+}
+
+.logo-icon{
+
+    width:48px;
+    height:48px;
+
+    border-radius:18px;
+
+    display:grid;
+    place-items:center;
+
+    background:
+        linear-gradient(
+            135deg,
+            #7c4dff,
+            #5b34d6
+        );
+
+    box-shadow:
+        0 12px 28px rgba(124,77,255,.4);
+}
+
+.logo-icon span{
+    font-size:28px;
+}
+
+.logo-text{
+
+    font-size:1.2rem;
+
+    font-weight:700;
+
+    letter-spacing:-.03em;
+}
+
+.main-grid{
+
+    width:min(100%,1100px);
+
+    margin:auto;
+
+    display:grid;
+
+    grid-template-columns:1.2fr .8fr;
+
+    gap:24px;
+}
+
+.card{
+
+    position:relative;
+
+    overflow:hidden;
+
+    border-radius:var(--radius);
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(255,255,255,.06),
+            rgba(255,255,255,.03)
+        );
+
+    border:1px solid var(--border);
+
+    box-shadow:var(--shadow);
+
+    backdrop-filter:blur(18px);
+
+    padding:24px;
+
+    transition:
+        .35s ease;
+}
+
+.card:hover{
+
+    transform:translateY(-4px);
+
+    border-color:rgba(124,77,255,.35);
+
+    box-shadow:
+        0 20px 50px rgba(0,0,0,.5),
+        0 0 50px rgba(124,77,255,.18);
+}
+
+.card::before{
+
+    content:"";
+
+    position:absolute;
+
+    inset:0;
+
+    background:
+        linear-gradient(
+            120deg,
+            rgba(255,255,255,.12),
+            transparent 40%
+        );
+
+    pointer-events:none;
+}
+
+.upload-zone{
+
+    height:500px;
+
+    border-radius:24px;
+
+    border:2px dashed rgba(255,255,255,.14);
+
+    display:flex;
+
+    flex-direction:column;
+
+    justify-content:center;
+
+    align-items:center;
+
+    text-align:center;
+
+    gap:16px;
+
+    cursor:pointer;
+
+    transition:.35s ease;
+
+    position:relative;
+
+    overflow:hidden;
+}
+
+.upload-zone:hover{
+
+    transform:scale(1.01);
+
+    border-color:var(--primary);
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(124,77,255,.08),
+            rgba(124,77,255,.03)
+        );
+}
+
+.upload-zone .material-symbols-rounded{
+
+    font-size:70px;
+
+    color:var(--primary-light);
+
+    animation:pulse 2.5s infinite ease-in-out;
+}
+
+@keyframes pulse{
+    50%{
+        transform:translateY(-6px);
+    }
+}
+
+.upload-zone h2{
+
+    font-size:1.8rem;
+
+    letter-spacing:-.04em;
+}
+
+.upload-zone p{
+
+    color:var(--muted);
+}
+
+.preview{
+
+    width:100%;
+    height:100%;
+
+    object-fit:contain;
+
+    border-radius:18px;
+
+    display:none;
+}
+
+.section-title{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:10px;
+
+    margin-bottom:24px;
+}
+
+.section-title h3{
+
+    font-size:1.2rem;
+
+    letter-spacing:-.03em;
+}
+
+.preset-grid{
+
+    display:grid;
+
+    grid-template-columns:repeat(2,1fr);
+
+    gap:12px;
+
+    margin-bottom:20px;
+}
+
+.preset-btn{
+
+    height:52px;
+
+    border:none;
+
+    border-radius:18px;
+
+    background:var(--surface);
+
+    color:var(--text);
+
+    font-family:inherit;
+
+    font-size:1rem;
+
+    cursor:pointer;
+
+    transition:.25s ease;
+
+    border:1px solid transparent;
+}
+
+.preset-btn:hover{
+
+    background:var(--surface-hover);
+
+    transform:translateY(-2px);
+}
+
+.preset-btn.active{
+
+    background:
+        linear-gradient(
+            135deg,
+            #7c4dff,
+            #5b34d6
+        );
+
+    border-color:rgba(255,255,255,.08);
+
+    box-shadow:
+        0 12px 28px rgba(124,77,255,.35);
+}
+
+.input-group{
+
+    margin-bottom:16px;
+}
+
+.input-group label{
+
+    display:block;
+
+    margin-bottom:8px;
+
+    font-size:.92rem;
+
+    color:var(--muted);
+}
+
+.input{
+
+    width:100%;
+
+    height:56px;
+
+    border-radius:18px;
+
+    border:1px solid rgba(255,255,255,.08);
+
+    background:rgba(255,255,255,.04);
+
+    color:var(--text);
+
+    padding:0 16px;
+
+    font-size:1rem;
+
+    outline:none;
+
+    transition:.25s ease;
+}
+
+.input:focus{
+
+    border-color:var(--primary);
+
+    box-shadow:
+        0 0 0 4px rgba(124,77,255,.12);
+}
+
+.action-btn{
+
+    position:relative;
+
+    overflow:hidden;
+
+    width:100%;
+
+    height:58px;
+
+    border:none;
+
+    border-radius:20px;
+
+    cursor:pointer;
+
+    color:white;
+
+    font-family:inherit;
+
+    font-size:1rem;
+
+    font-weight:600;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    gap:10px;
+
+    margin-top:18px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #7c4dff,
+            #5b34d6
+        );
+
+    box-shadow:
+        0 10px 30px rgba(124,77,255,.35);
+
+    transition:.25s ease;
+}
+
+.action-btn:hover{
+
+    transform:translateY(-2px);
+
+    box-shadow:
+        0 18px 40px rgba(124,77,255,.45);
+}
+
+.action-btn:active{
+    transform:scale(.98);
+}
+
+.action-btn::before{
+
+    content:"";
+
+    position:absolute;
+
+    top:0;
+    left:-120%;
+
+    width:80%;
+    height:100%;
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            rgba(255,255,255,.35),
+            transparent
+        );
+
+    transform:skewX(-20deg);
+
+    transition:left .7s ease;
+}
+
+.action-btn:hover::before{
+    left:140%;
+}
+
+.stats{
+
+    margin-top:22px;
+
+    display:grid;
+
+    gap:14px;
+}
+
+.stat{
+
+    padding:18px;
+
+    border-radius:20px;
+
+    background:rgba(255,255,255,.03);
+
+    border:1px solid rgba(255,255,255,.05);
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+}
+
+.stat-label{
+    color:var(--muted);
+}
+
+.footer{
+
+    width:min(100%,1100px);
+
+    margin:28px auto 0 auto;
+
+    padding:20px;
+
+    border-radius:24px;
+
+    background:
+        linear-gradient(
+            to top,
+            rgba(0,0,0,.35),
+            transparent
+        );
+
+    backdrop-filter:blur(20px);
+
+    border:1px solid rgba(255,255,255,.06);
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    gap:20px;
+
+    flex-wrap:wrap;
+}
+
+.socials{
+
+    display:flex;
+
+    gap:12px;
+}
+
+.social-btn{
+
+    width:46px;
+    height:46px;
+
+    border-radius:16px;
+
+    display:grid;
+    place-items:center;
+
+    background:rgba(255,255,255,.05);
+
+    border:1px solid rgba(255,255,255,.06);
+
+    color:white;
+
+    text-decoration:none;
+
+    transition:.25s ease;
+}
+
+.social-btn:hover{
+
+    transform:translateY(-2px);
+
+    background:rgba(124,77,255,.14);
+
+    border-color:rgba(124,77,255,.35);
+}
+
+.loading{
+
+    width:50px;
+    height:50px;
+
+    border-radius:50%;
+
+    border:3px solid rgba(255,255,255,.08);
+
+    border-top-color:var(--primary);
+
+    animation:spin .8s linear infinite;
+
+    margin:auto;
+
+    display:none;
+}
+
+@keyframes spin{
+    to{
+        transform:rotate(360deg);
+    }
+}
+
+@media(max-width:900px){
+
+    .main-grid{
+        grid-template-columns:1fr;
+    }
+
+    .upload-zone{
+        height:400px;
+    }
+}
+
+@media(max-width:600px){
+
+    body{
+        padding:14px;
+    }
+
+    .card{
+        padding:18px;
+    }
+
+    .upload-zone{
+        height:320px;
+    }
+
+    .preset-grid{
+        grid-template-columns:1fr;
+    }
+
+    .logo-text{
+        font-size:1rem;
+    }
+
+    .footer{
+        flex-direction:column;
+        align-items:flex-start;
+    }
+}
+
+</style>
 </head>
 <body>
 
-    <header class="island-header">
-        <div class="animated-border-header"></div>
-        <div class="island-content">
-            <span class="material-symbols-rounded primary-icon">photo_size_select_large</span>
-            <span class="logo-text gradient-flow">RESIZE STUDIO</span>
+<div class="bg-orb orb-1"></div>
+<div class="bg-orb orb-2"></div>
+
+<header class="island-header">
+
+    <div class="logo">
+
+        <div class="logo-icon">
+            <span class="material-symbols-rounded">
+                photo_size_select_large
+            </span>
         </div>
-    </header>
 
-    <div class="main-wrapper">
-        <main class="app-container">
-            <div class="layout-grid">
-                
-                <div class="media-panel bento-box" id="mediaPanel">
-                    <input type="file" id="imageInput" accept="image/png, image/jpeg, image/webp" hidden>
-                    
-                    <label for="imageInput" class="upload-state" id="dropZone">
-                        <span class="material-symbols-rounded upload-icon">cloud_upload</span>
-                        <h3>Tap or Drop Image</h3>
-                        <p>PNG, JPG, WEBP</p>
-                    </label>
-
-                    <div class="slider-state hidden-anim" id="sliderArea">
-                        <div class="comparison-slider" id="compareContainer">
-                            <img id="imgBefore" alt="Original Image">
-                            <img id="imgAfter" alt="Compressed Image" style="opacity: 0;">
-                            
-                            <div class="grain-overlay"></div>
-                            
-                            <input type="range" min="0" max="100" value="100" id="sliderInput">
-                            <div class="slider-line" style="display: none;">
-                                <div class="slider-button">
-                                    <span class="material-symbols-rounded">swap_horiz</span>
-                                </div>
-                            </div>
-                            
-                            <div class="badge badge-before">
-                                <span class="badge-label">Before</span>
-                                <div class="badge-data">
-                                    <span class="material-symbols-rounded">image</span>
-                                    <span id="sizeBefore">Original</span>
-                                </div>
-                            </div>
-                            <div class="badge badge-after" style="display: none;">
-                                <span class="badge-label">After</span>
-                                <div class="badge-data">
-                                    <span class="material-symbols-rounded">compress</span>
-                                    <span id="sizeAfter">Optimized</span>
-                                </div>
-                            </div>
-                        </div>
-                        <button class="icon-btn close-preview-btn" id="resetBtn" title="Upload New">
-                            <span class="material-symbols-rounded">close</span>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="control-panel bento-box">
-                    <div class="section-header">
-                        <span class="material-symbols-rounded">speed</span>
-                        <h3>Quick Compress</h3>
-                    </div>
-                    
-                    <div class="preset-tabs">
-                        <button class="preset-btn active" data-size="20">20 KB</button>
-                        <button class="preset-btn" data-size="50">50 KB</button>
-                        <button class="preset-btn" data-size="1000">1 MB</button>
-                        <button class="preset-btn" id="customTabBtn">Custom</button>
-                    </div>
-
-                    <div id="custom-controls" class="input-section">
-                        <div class="input-section-inner">
-                            <div class="custom-grid">
-                                <div class="input-group compact-input">
-                                    <span class="material-symbols-rounded input-icon left-icon">width</span>
-                                    <input type="number" id="widthInput" placeholder="Width (px)">
-                                </div>
-                                <div class="input-group compact-input">
-                                    <span class="material-symbols-rounded input-icon left-icon">height</span>
-                                    <input type="number" id="heightInput" placeholder="Height (px)">
-                                </div>
-                            </div>
-                            
-                            <div class="checkbox-group">
-                                <input type="checkbox" id="lockAspectRatio" checked>
-                                <label for="lockAspectRatio">Lock Aspect Ratio</label>
-                            </div>
-
-                            <div class="input-group compact-input mt-2">
-                                <span class="material-symbols-rounded input-icon left-icon">memory</span>
-                                <input type="number" id="targetKbInput" placeholder="Max Size (KB)">
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="action-buttons mt-3">
-                        <button id="resizeBtn" class="m3-button tonal-glow w-full" disabled>
-                            <span class="material-symbols-rounded">compress</span>
-                            <span>Resize Image</span>
-                        </button>
-                        
-                        <button id="downloadBtn" class="animated-btn w-full" disabled>
-                            <div class="animated-border-button"></div>
-                            <div class="btn-content">
-                                <span class="material-symbols-rounded btn-icon">download</span>
-                                <span>Export Image</span>
-                            </div>
-                        </button>
-                    </div>
-                </div>
-
-            </div>
-        </main>
-
-        <div class="bottom-tools-section">
-            <div class="tools-header">
-                <span class="material-symbols-rounded">apps</span>
-                <h3>More Tools</h3>
-            </div>
-            <div class="tools-grid">
-                <a href="https://qr-studio-github-io.vercel.app/" class="mini-tool-card">
-                    <div class="tool-logo"><span class="material-symbols-rounded">qr_code_scanner</span></div>
-                    <div class="tool-info">
-                        <span class="tool-title">QR Studio</span>
-                        <span class="tool-subtitle">Advance QR Code Generator</span>
-                    </div>
-                </a>
-                <a href="https://broken-melodies.vercel.app/" class="mini-tool-card">
-                    <div class="tool-logo"><span class="material-symbols-rounded">music_note</span>
-                    </div>
-                    <div class="tool-info">
-                        <span class="tool-title">BROKEN MELODIES</span>
-                        <span class="tool-subtitle">The Music Project</span>
-                    </div>
-                </a>
-                <a href="#" class="mini-tool-card desktop-only">
-                    <div class="tool-logo"><span class="material-symbols-rounded">palette</span></div>
-                    <div class="tool-info">
-                        <span class="tool-title">ColorMatch</span>
-                        <span class="tool-subtitle">Palette Gen</span>
-                    </div>
-                </a>
-                <a href="#" class="mini-tool-card desktop-only">
-                    <div class="tool-logo"><span class="material-symbols-rounded">bolt</span></div>
-                    <div class="tool-info">
-                        <span class="tool-title">BPM Tapper</span>
-                        <span class="tool-subtitle">Find Tempo</span>
-                    </div>
-                </a>
-            </div>
-
-            <div class="bottom-footer-capsule">
-                <div class="credit-row">
-                    <div class="credit-text">
-                        Created with <span class="material-symbols-rounded heart-icon-small">favorite</span> by <strong>Aditya Raj</strong>
-                    </div>
-                    <div class="social-links-bottom">
-                        <a href="https://github.com/Aditya-rajj" target="_blank" class="social-btn" title="GitHub">
-                            <svg viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.161 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
-                        </a>
-                        <a href="https://www.instagram.com/_aditya__199?igsh=YnQwZXpteG5meXVj" target="_blank" class="social-btn" title="Instagram">
-                            <svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
-                        </a>
-                        <a href="https://t.me/incognitohorny" target="_blank" class="social-btn" title="Telegram">
-                            <svg viewBox="0 0 24 24"><path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm5.894 8.221l-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.18-.357.295-.6.295-.002 0-.003 0-.005 0l.213-3.054 5.56-5.022c.24-.213-.054-.334-.373-.121l-6.869 4.326-2.96-.924c-.64-.203-.658-.64.135-.954l11.566-4.458c.538-.196 1.006.128.832.94z"/></svg>
-                        </a>
-                    </div>
-                </div>
-                <div class="footer-divider-line"></div>
-                <div class="copyright-text-bottom">© 2026 Aditya. All Rights Reserved.</div>
-            </div>
+        <div class="logo-text">
+            RESIZE STUDIO
         </div>
-    </div> 
 
-    <div id="welcomeModal" class="modal-overlay">
-        <div class="modal-content glass-panel welcome-panel">
-            <div class="welcome-header">
-                <div class="welcome-icon-wrapper">
-                    <span class="material-symbols-rounded primary-icon">verified_user</span>
-                </div>
-                <h2>Welcome to Resize Studio</h2>
-                <p>Your premium, secure image utility.</p>
-            </div>
-            
-            <div class="features-list">
-                <div class="feature-item">
-                    <div class="feature-icon"><span class="material-symbols-rounded">gpp_good</span></div>
-                    <div class="feature-text">
-                        <h4>100% Privacy First</h4>
-                        <p>Everything processes locally on your device. Your images are never uploaded to any server.</p>
-                    </div>
-                </div>
-                <div class="feature-item">
-                    <div class="feature-icon"><span class="material-symbols-rounded">block</span></div>
-                    <div class="feature-text">
-                        <h4>Completely Ad-Free</h4>
-                        <p>No pop-ups, no banners, no tracking. Just a clean, uninterrupted workspace.</p>
-                    </div>
-                </div>
-                <div class="feature-item">
-                    <div class="feature-icon"><span class="material-symbols-rounded">bolt</span></div>
-                    <div class="feature-text">
-                        <h4>Lightning Fast</h4>
-                        <p>No waiting for uploads or downloads. Get your optimized results instantly.</p>
-                    </div>
-                </div>
-                <div class="feature-item">
-                    <div class="feature-icon"><span class="material-symbols-rounded">tune</span></div>
-                    <div class="feature-text">
-                        <h4>Precision Control</h4>
-                        <p>Hit exact file sizes like 20KB or 50KB perfectly for quick form submissions.</p>
-                    </div>
-                </div>
-            </div>
-            
-            <button id="getStartedBtn" class="animated-btn w-full mt-3">
-                <div class="animated-border-button"></div>
-                <div class="btn-content">
-                    <span>Let's Go</span>
-                    <span class="material-symbols-rounded">arrow_forward</span>
-                </div>
-            </button>
-        </div>
     </div>
 
-    <script src="script.js"></script>
+</header>
+
+<main class="main-grid">
+
+    <section class="card">
+
+        <input
+            type="file"
+            id="imageInput"
+            hidden
+            accept="image/*"
+        />
+
+        <label
+            for="imageInput"
+            class="upload-zone"
+            id="uploadZone"
+        >
+
+            <span class="material-symbols-rounded">
+                cloud_upload
+            </span>
+
+            <h2>Drop Your Image</h2>
+
+            <p>
+                PNG, JPG, WEBP Supported
+            </p>
+
+            <img
+                id="preview"
+                class="preview"
+                alt="Preview"
+            />
+
+        </label>
+
+    </section>
+
+    <aside class="card">
+
+        <div class="section-title">
+
+            <span class="material-symbols-rounded">
+                tune
+            </span>
+
+            <h3>Compression Settings</h3>
+
+        </div>
+
+        <div class="preset-grid">
+
+            <button class="preset-btn active">
+                20 KB
+            </button>
+
+            <button class="preset-btn">
+                50 KB
+            </button>
+
+            <button class="preset-btn">
+                100 KB
+            </button>
+
+            <button class="preset-btn">
+                Custom
+            </button>
+
+        </div>
+
+        <div class="input-group">
+
+            <label>
+                Width
+            </label>
+
+            <input
+                type="number"
+                class="input"
+                placeholder="1920"
+            />
+
+        </div>
+
+        <div class="input-group">
+
+            <label>
+                Height
+            </label>
+
+            <input
+                type="number"
+                class="input"
+                placeholder="1080"
+            />
+
+        </div>
+
+        <div class="input-group">
+
+            <label>
+                Target Size (KB)
+            </label>
+
+            <input
+                type="number"
+                class="input"
+                placeholder="50"
+            />
+
+        </div>
+
+        <button class="action-btn">
+
+            <span class="material-symbols-rounded">
+                auto_fix_high
+            </span>
+
+            Optimize Image
+
+        </button>
+
+        <button class="action-btn">
+
+            <span class="material-symbols-rounded">
+                download
+            </span>
+
+            Export Image
+
+        </button>
+
+        <div class="stats">
+
+            <div class="stat">
+
+                <div class="stat-label">
+                    Compression
+                </div>
+
+                <strong>82%</strong>
+
+            </div>
+
+            <div class="stat">
+
+                <div class="stat-label">
+                    Resolution
+                </div>
+
+                <strong>1920×1080</strong>
+
+            </div>
+
+            <div class="stat">
+
+                <div class="stat-label">
+                    Processing
+                </div>
+
+                <strong>0.24s</strong>
+
+            </div>
+
+        </div>
+
+    </aside>
+
+</main>
+
+<footer class="footer">
+
+    <div>
+        Built with ❤️ by ROHIT
+    </div>
+
+    <div class="socials">
+
+        <a
+            href="#"
+            class="social-btn"
+        >
+            <span class="material-symbols-rounded">
+                code
+            </span>
+        </a>
+
+        <a
+            href="#"
+            class="social-btn"
+        >
+            <span class="material-symbols-rounded">
+                public
+            </span>
+        </a>
+
+        <a
+            href="#"
+            class="social-btn"
+        >
+            <span class="material-symbols-rounded">
+                send
+            </span>
+        </a>
+
+    </div>
+
+</footer>
+
+<script>
+
+const imageInput =
+    document.getElementById("imageInput");
+
+const preview =
+    document.getElementById("preview");
+
+const uploadZone =
+    document.getElementById("uploadZone");
+
+imageInput.addEventListener("change", e => {
+
+    const file = e.target.files[0];
+
+    if(!file) return;
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+
+        preview.src = reader.result;
+
+        preview.style.display = "block";
+
+        uploadZone.querySelector("span").style.display = "none";
+
+        uploadZone.querySelector("h2").style.display = "none";
+
+        uploadZone.querySelector("p").style.display = "none";
+    };
+
+    reader.readAsDataURL(file);
+});
+
+["dragenter","dragover"].forEach(event => {
+
+    uploadZone.addEventListener(event,e => {
+
+        e.preventDefault();
+
+        uploadZone.style.borderColor =
+            "#7c4dff";
+    });
+});
+
+["dragleave","drop"].forEach(event => {
+
+    uploadZone.addEventListener(event,e => {
+
+        e.preventDefault();
+
+        uploadZone.style.borderColor =
+            "rgba(255,255,255,.14)";
+    });
+});
+
+</script>
+
 </body>
-</html>
+    </html>
