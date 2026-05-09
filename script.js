@@ -1,290 +1,855 @@
-// DOM Elements
-const imageInput = document.getElementById('imageInput');
-const dropZone = document.getElementById('dropZone');
-const mediaPanel = document.getElementById('mediaPanel');
-const sliderArea = document.getElementById('sliderArea');
-const imgBefore = document.getElementById('imgBefore');
-const imgAfter = document.getElementById('imgAfter');
-const sliderInput = document.getElementById('sliderInput');
-const sliderLine = document.querySelector('.slider-line');
-const sizeBefore = document.getElementById('sizeBefore');
-const sizeAfter = document.getElementById('sizeAfter');
-const badgeAfter = document.querySelector('.badge-after');
-const resetBtn = document.getElementById('resetBtn');
-
-const resizeBtn = document.getElementById('resizeBtn');
-const downloadBtn = document.getElementById('downloadBtn');
-
-const presetBtns = document.querySelectorAll('.preset-btn');
-const customTabBtn = document.getElementById('customTabBtn');
-const customControls = document.getElementById('custom-controls');
-const widthInput = document.getElementById('widthInput');
-const heightInput = document.getElementById('heightInput');
-const targetKbInput = document.getElementById('targetKbInput');
-const lockAspectRatio = document.getElementById('lockAspectRatio');
-
-// State Variables
-let originalImageObj = null;
-let currentFile = null;
-let finalBlobUrl = null;
-let currentTargetKB = 20; // Default preset
-let originalRatio = 1;
-
 // =========================================
-// UI INTERACTIONS
+// RESIZE STUDIO — PREMIUM ENGINE v2
+// Optimized + Modernized + Production Ready
 // =========================================
 
-// Slider Interaction Physics
-sliderInput.addEventListener('input', (e) => {
-    const value = e.target.value;
-    imgAfter.style.clipPath = `polygon(0 0, ${value}% 0, ${value}% 100%, 0 100%)`;
-    sliderLine.style.left = `${value}%`;
-});
+// =========================================
+// DOM CACHE
+// =========================================
 
-// Preset Controls
-presetBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-        presetBtns.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        
-        if (btn.id === 'customTabBtn') {
-            customControls.classList.add('active');
-            currentTargetKB = targetKbInput.value ? parseInt(targetKbInput.value) : null;
-        } else {
-            customControls.classList.remove('active');
-            currentTargetKB = parseInt(btn.dataset.size);
-        }
+const $ = (selector) => document.querySelector(selector);
+const $$ = (selector) => document.querySelectorAll(selector);
+
+const elements = {
+
+    imageInput: $("#imageInput"),
+    dropZone: $("#dropZone"),
+    mediaPanel: $("#mediaPanel"),
+    sliderArea: $("#sliderArea"),
+
+    imgBefore: $("#imgBefore"),
+    imgAfter: $("#imgAfter"),
+
+    sliderInput: $("#sliderInput"),
+    sliderLine: $(".slider-line"),
+
+    sizeBefore: $("#sizeBefore"),
+    sizeAfter: $("#sizeAfter"),
+
+    badgeAfter: $(".badge-after"),
+
+    resetBtn: $("#resetBtn"),
+
+    resizeBtn: $("#resizeBtn"),
+    downloadBtn: $("#downloadBtn"),
+
+    presetBtns: $$(".preset-btn"),
+
+    customTabBtn: $("#customTabBtn"),
+    customControls: $("#custom-controls"),
+
+    widthInput: $("#widthInput"),
+    heightInput: $("#heightInput"),
+
+    targetKbInput: $("#targetKbInput"),
+
+    lockAspectRatio: $("#lockAspectRatio"),
+
+    welcomeModal: $("#welcomeModal"),
+    getStartedBtn: $("#getStartedBtn")
+};
+
+// =========================================
+// STATE
+// =========================================
+
+const state = {
+
+    originalImage: null,
+
+    currentFile: null,
+
+    finalBlob: null,
+
+    finalBlobUrl: null,
+
+    currentTargetKB: 20,
+
+    originalRatio: 1,
+
+    isProcessing: false
+};
+
+// =========================================
+// CONSTANTS
+// =========================================
+
+const PROCESSING_MESSAGES = [
+
+    "Crunching pixels...",
+    "Optimizing quality...",
+    "Applying magic...",
+    "Compressing image...",
+    "Almost done..."
+];
+
+const MIN_QUALITY = 0.08;
+const QUALITY_STEP = 0.05;
+
+const MIN_SCALE = 0.2;
+const SCALE_STEP = 0.08;
+
+// =========================================
+// UTILITIES
+// =========================================
+
+const wait = (ms) =>
+    new Promise(resolve => setTimeout(resolve, ms));
+
+const formatKB = (bytes) =>
+    `${(bytes / 1024).toFixed(1)} KB`;
+
+const vibrate = (duration = 12) =>
+    navigator.vibrate?.(duration);
+
+const revokeBlobURL = () => {
+
+    if (state.finalBlobUrl) {
+
+        URL.revokeObjectURL(state.finalBlobUrl);
+
+        state.finalBlobUrl = null;
+    }
+};
+
+const setButtonLoading = (button, loading, text = "") => {
+
+    const textSpan =
+        button.querySelector("span:nth-child(2)");
+
+    if (!textSpan) return;
+
+    if (loading) {
+
+        button.disabled = true;
+
+        textSpan.dataset.original =
+            textSpan.textContent;
+
+        textSpan.textContent = text;
+
+    } else {
+
+        button.disabled = false;
+
+        textSpan.textContent =
+            textSpan.dataset.original ||
+            textSpan.textContent;
+    }
+};
+
+const getCanvasBlob = (
+    canvas,
+    mimeType,
+    quality
+) => {
+
+    return new Promise(resolve => {
+
+        canvas.toBlob(
+            resolve,
+            mimeType,
+            quality
+        );
+    });
+};
+
+// =========================================
+// IMAGE PANEL RESPONSIVE SIZING
+// =========================================
+
+function updateMediaPanelHeight() {
+
+    if (!state.originalImage) return;
+
+    const {
+
+        mediaPanel
+
+    } = elements;
+
+    const currentWidth =
+        mediaPanel.clientWidth;
+
+    let calculatedHeight =
+        currentWidth / state.originalRatio;
+
+    const maxHeight =
+        window.innerWidth > 850
+            ? 620
+            : 450;
+
+    calculatedHeight =
+        Math.min(calculatedHeight, maxHeight);
+
+    calculatedHeight =
+        Math.max(calculatedHeight, 220);
+
+    mediaPanel.style.height =
+        `${calculatedHeight}px`;
+}
+
+window.addEventListener(
+    "resize",
+    updateMediaPanelHeight
+);
+
+// =========================================
+// SLIDER INTERACTION
+// =========================================
+
+elements.sliderInput.addEventListener(
+    "input",
+    ({ target }) => {
+
+        const value = target.value;
+
+        elements.imgAfter.style.clipPath =
+            `polygon(
+                0 0,
+                ${value}% 0,
+                ${value}% 100%,
+                0 100%
+            )`;
+
+        elements.sliderLine.style.left =
+            `${value}%`;
+    }
+);
+
+// =========================================
+// PRESET CONTROLS
+// =========================================
+
+elements.presetBtns.forEach(button => {
+
+    button.addEventListener("click", () => {
+
+        elements.presetBtns.forEach(btn =>
+            btn.classList.remove("active")
+        );
+
+        button.classList.add("active");
+
+        const isCustom =
+            button.id === "customTabBtn";
+
+        elements.customControls.classList.toggle(
+            "active",
+            isCustom
+        );
+
+        state.currentTargetKB = isCustom
+            ? parseInt(
+                  elements.targetKbInput.value
+              ) || null
+            : parseInt(button.dataset.size);
     });
 });
 
-// Aspect Ratio Locking Logic
-widthInput.addEventListener('input', () => {
-    if (lockAspectRatio.checked && originalImageObj) {
-        heightInput.value = Math.round(widthInput.value / originalRatio);
-    }
-    if (customControls.classList.contains('active')) currentTargetKB = parseInt(targetKbInput.value) || null;
-});
-
-heightInput.addEventListener('input', () => {
-    if (lockAspectRatio.checked && originalImageObj) {
-        widthInput.value = Math.round(heightInput.value * originalRatio);
-    }
-    if (customControls.classList.contains('active')) currentTargetKB = parseInt(targetKbInput.value) || null;
-});
-
-targetKbInput.addEventListener('input', () => {
-    if (customControls.classList.contains('active')) currentTargetKB = parseInt(targetKbInput.value) || null;
-});
-
 // =========================================
-// FILE HANDLING & DYNAMIC RESPONSIVE SIZING
+// ASPECT RATIO LOCK
 // =========================================
 
-dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
-dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
-dropZone.addEventListener('drop', (e) => {
-    e.preventDefault();
-    dropZone.classList.remove('dragover');
-    if (e.dataTransfer.files.length) {
-        imageInput.files = e.dataTransfer.files;
-        handleFileSelect();
-    }
-});
-imageInput.addEventListener('change', handleFileSelect);
+function syncAspectRatio(type) {
 
-// Function to perfectly calculate box size based on screen
-function updateMediaPanelHeight() {
-    if (!originalImageObj) return;
-    const currentBoxWidth = mediaPanel.clientWidth;
-    let targetHeight = currentBoxWidth / originalRatio;
-    
-    // Responsive constraints
-    if (window.innerWidth > 850) {
-        if (targetHeight > 600) targetHeight = 600; // Desktop Max
+    if (
+        !elements.lockAspectRatio.checked ||
+        !state.originalImage
+    ) return;
+
+    if (type === "width") {
+
+        elements.heightInput.value =
+            Math.round(
+                elements.widthInput.value /
+                state.originalRatio
+            );
+
     } else {
-        if (targetHeight > 450) targetHeight = 450; // Mobile Max
+
+        elements.widthInput.value =
+            Math.round(
+                elements.heightInput.value *
+                state.originalRatio
+            );
     }
-    
-    if (targetHeight < 200) targetHeight = 200; // Universal Min
-    mediaPanel.style.height = `${targetHeight}px`;
 }
 
-// Ensure layout doesn't break if desktop user resizes window
-window.addEventListener('resize', updateMediaPanelHeight);
+elements.widthInput.addEventListener(
+    "input",
+    () => syncAspectRatio("width")
+);
+
+elements.heightInput.addEventListener(
+    "input",
+    () => syncAspectRatio("height")
+);
+
+elements.targetKbInput.addEventListener(
+    "input",
+    () => {
+
+        if (
+            elements.customControls.classList.contains(
+                "active"
+            )
+        ) {
+
+            state.currentTargetKB =
+                parseInt(
+                    elements.targetKbInput.value
+                ) || null;
+        }
+    }
+);
+
+// =========================================
+// DRAG & DROP
+// =========================================
+
+[
+    "dragenter",
+    "dragover"
+].forEach(event => {
+
+    elements.dropZone.addEventListener(
+        event,
+        e => {
+
+            e.preventDefault();
+
+            elements.dropZone.classList.add(
+                "dragover"
+            );
+        }
+    );
+});
+
+[
+    "dragleave",
+    "drop"
+].forEach(event => {
+
+    elements.dropZone.addEventListener(
+        event,
+        e => {
+
+            e.preventDefault();
+
+            elements.dropZone.classList.remove(
+                "dragover"
+            );
+        }
+    );
+});
+
+elements.dropZone.addEventListener(
+    "drop",
+    e => {
+
+        if (!e.dataTransfer.files.length)
+            return;
+
+        elements.imageInput.files =
+            e.dataTransfer.files;
+
+        handleFileSelect();
+    }
+);
+
+elements.imageInput.addEventListener(
+    "change",
+    handleFileSelect
+);
+
+// =========================================
+// FILE SELECT
+// =========================================
 
 function handleFileSelect() {
-    const file = imageInput.files[0];
+
+    const file =
+        elements.imageInput.files[0];
+
     if (!file) return;
 
-    currentFile = file;
-    sizeBefore.textContent = `${(file.size / 1024).toFixed(1)} KB`;
+    state.currentFile = file;
+
+    elements.sizeBefore.textContent =
+        formatKB(file.size);
 
     const reader = new FileReader();
-    reader.onload = (e) => {
-        originalImageObj = new Image();
-        originalImageObj.onload = () => {
-            // Setup Input Fields
-            widthInput.value = originalImageObj.width;
-            heightInput.value = originalImageObj.height;
-            originalRatio = originalImageObj.width / originalImageObj.height;
-            
-            // Execute Dynamic Sizing
+
+    reader.onload = ({ target }) => {
+
+        const image = new Image();
+
+        image.onload = () => {
+
+            state.originalImage = image;
+
+            state.originalRatio =
+                image.width / image.height;
+
+            elements.widthInput.value =
+                image.width;
+
+            elements.heightInput.value =
+                image.height;
+
             updateMediaPanelHeight();
 
-            // Setup Preview States
-            imgBefore.src = e.target.result;
-            imgAfter.style.opacity = '0';
-            sliderLine.style.display = 'none';
-            badgeAfter.style.display = 'none';
-            sliderInput.value = 100;
-            
-            sliderArea.classList.remove('hidden-anim');
-            resizeBtn.disabled = false; 
-            downloadBtn.disabled = true;
+            elements.imgBefore.src =
+                target.result;
+
+            elements.imgAfter.style.opacity =
+                "0";
+
+            elements.sliderLine.style.display =
+                "none";
+
+            elements.badgeAfter.style.display =
+                "none";
+
+            elements.sliderInput.value = 100;
+
+            elements.sliderArea.classList.remove(
+                "hidden-anim"
+            );
+
+            elements.resizeBtn.disabled =
+                false;
+
+            elements.downloadBtn.disabled =
+                true;
         };
-        originalImageObj.src = e.target.result;
+
+        image.src = target.result;
     };
+
     reader.readAsDataURL(file);
 }
 
-// Reset UI
-resetBtn.addEventListener('click', () => {
-    sliderArea.classList.add('hidden-anim');
-    mediaPanel.style.height = ''; 
-    imageInput.value = '';
-    originalImageObj = null;
-    resizeBtn.disabled = true;
-    downloadBtn.disabled = true;
-    if (finalBlobUrl) URL.revokeObjectURL(finalBlobUrl);
-});
-
 // =========================================
-// CORE PROCESSING ENGINE
+// RESET ENGINE
 // =========================================
 
-// Async Blob Helper
-const getCanvasBlob = (canvas, mimeType, quality) => {
-    return new Promise(resolve => canvas.toBlob(resolve, mimeType, quality));
-};
+elements.resetBtn.addEventListener(
+    "click",
+    () => {
 
-// Dynamic Button Messages
-const processingMsgs = ["Crunching pixels...", "Optimizing size...", "Applying magic...", "Almost there..."];
+        revokeBlobURL();
 
-resizeBtn.addEventListener('click', async () => {
-    if (!originalImageObj) return;
+        state.originalImage = null;
 
-    const btnTextSpan = resizeBtn.querySelector('span:nth-child(2)');
-    const originalBtnText = btnTextSpan.textContent;
-    let msgIndex = 0;
+        state.currentFile = null;
 
-    // Trigger Visual Animation & Lock Buttons
-    mediaPanel.classList.add('is-processing');
-    resizeBtn.disabled = true;
-    downloadBtn.disabled = true;
+        state.finalBlob = null;
 
-    btnTextSpan.textContent = processingMsgs[msgIndex];
-    const msgInterval = setInterval(() => {
-        msgIndex = (msgIndex + 1) % processingMsgs.length;
-        btnTextSpan.textContent = processingMsgs[msgIndex];
-    }, 600);
+        elements.imageInput.value = "";
 
-    // Yield to let UI update
-    await new Promise(r => setTimeout(r, 400));
+        elements.mediaPanel.style.height =
+            "";
 
-    // Calculate Target Dimensions
-    let targetW = originalImageObj.width;
-    let targetH = originalImageObj.height;
+        elements.sliderArea.classList.add(
+            "hidden-anim"
+        );
 
-    if (customControls.classList.contains('active')) {
-        targetW = parseInt(widthInput.value) || targetW;
-        targetH = parseInt(heightInput.value) || targetH;
+        elements.resizeBtn.disabled = true;
+
+        elements.downloadBtn.disabled =
+            true;
     }
+);
 
-    const canvas = document.createElement('canvas');
-    canvas.width = targetW;
-    canvas.height = targetH;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(originalImageObj, 0, 0, targetW, targetH);
+// =========================================
+// COMPRESSION ENGINE
+// =========================================
 
-    let mimeType = (currentFile.type === 'image/png' && !currentTargetKB) ? 'image/png' : 'image/jpeg';
+async function compressImage({
+
+    canvas,
+    mimeType,
+    targetKB,
+    width,
+    height
+}) {
+
     let quality = 0.95;
-    let finalBlob = null;
 
-    // Compression Loop
-    if (currentTargetKB) {
-        let currentBlob = await getCanvasBlob(canvas, mimeType, quality);
-        
-        while (currentBlob.size / 1024 > currentTargetKB && quality > 0.1) {
-            quality -= 0.1;
-            currentBlob = await getCanvasBlob(canvas, mimeType, quality);
-        }
+    let scale = 1;
 
-        let scale = 1.0;
-        while (currentBlob.size / 1024 > currentTargetKB && scale > 0.2) {
-            scale -= 0.1;
-            canvas.width = targetW * scale;
-            canvas.height = targetH * scale;
-            ctx.drawImage(originalImageObj, 0, 0, canvas.width, canvas.height);
-            currentBlob = await getCanvasBlob(canvas, mimeType, quality);
-        }
-        finalBlob = currentBlob;
-    } else {
-        finalBlob = await getCanvasBlob(canvas, mimeType, quality);
+    let blob = await getCanvasBlob(
+        canvas,
+        mimeType,
+        quality
+    );
+
+    // QUALITY REDUCTION
+
+    while (
+
+        blob.size / 1024 > targetKB &&
+        quality > MIN_QUALITY
+
+    ) {
+
+        quality -= QUALITY_STEP;
+
+        blob = await getCanvasBlob(
+            canvas,
+            mimeType,
+            quality
+        );
     }
 
-    // Process Complete: Update UI
-    clearInterval(msgInterval); 
-    btnTextSpan.textContent = "Done!"; 
-    
-    const currentKbSize = finalBlob.size / 1024;
-    
-    if (finalBlobUrl) URL.revokeObjectURL(finalBlobUrl);
-    finalBlobUrl = URL.createObjectURL(finalBlob);
-    
-    imgAfter.src = finalBlobUrl;
-    sizeAfter.textContent = `${currentKbSize.toFixed(1)} KB`;
-    
-    imgAfter.style.opacity = '1';
-    sliderLine.style.display = 'flex';
-    badgeAfter.style.display = 'flex';
-    
-    sliderInput.value = 50;
-    imgAfter.style.clipPath = `polygon(0 0, 50% 0, 50% 100%, 0 100%)`;
-    sliderLine.style.left = `50%`;
+    // SCALE REDUCTION
 
-    // Remove Animation & Unlock Export
-    mediaPanel.classList.remove('is-processing');
-    downloadBtn.disabled = false;
-    
-    setTimeout(() => {
-        resizeBtn.disabled = false;
-        btnTextSpan.textContent = originalBtnText;
-    }, 1500);
-});
+    while (
 
-// Export 
-downloadBtn.addEventListener('click', () => {
-    if (!finalBlobUrl) return;
-    const a = document.createElement('a');
-    a.href = finalBlobUrl;
-    a.download = `ResizeStudio_${currentFile.name}`;
-    a.click();
-});
+        blob.size / 1024 > targetKB &&
+        scale > MIN_SCALE
 
-// =========================================
-// ONE-TIME WELCOME MODAL LOGIC
-// =========================================
-document.addEventListener('DOMContentLoaded', () => {
-    const welcomeModal = document.getElementById('welcomeModal');
-    const getStartedBtn = document.getElementById('getStartedBtn');
-    const hasVisited = localStorage.getItem('resizeStudio_welcomed');
+    ) {
 
-    if (!hasVisited) {
-        setTimeout(() => welcomeModal.classList.add('open'), 600);
+        scale -= SCALE_STEP;
+
+        canvas.width =
+            width * scale;
+
+        canvas.height =
+            height * scale;
+
+        const ctx =
+            canvas.getContext("2d");
+
+        ctx.clearRect(
+            0,
+            0,
+            canvas.width,
+            canvas.height
+        );
+
+        ctx.drawImage(
+            state.originalImage,
+            0,
+            0,
+            canvas.width,
+            canvas.height
+        );
+
+        blob = await getCanvasBlob(
+            canvas,
+            mimeType,
+            quality
+        );
     }
 
-    getStartedBtn.addEventListener('click', () => {
-        welcomeModal.classList.remove('open');
-        localStorage.setItem('resizeStudio_welcomed', 'true');
-    });
-});
+    return blob;
+}
+
+// =========================================
+// MAIN PROCESSOR
+// =========================================
+
+elements.resizeBtn.addEventListener(
+    "click",
+    async () => {
+
+        if (
+            !state.originalImage ||
+            state.isProcessing
+        ) return;
+
+        state.isProcessing = true;
+
+        const startTime =
+            performance.now();
+
+        const {
+
+            resizeBtn,
+            downloadBtn,
+            mediaPanel
+
+        } = elements;
+
+        let msgIndex = 0;
+
+        setButtonLoading(
+            resizeBtn,
+            true,
+            PROCESSING_MESSAGES[msgIndex]
+        );
+
+        const interval =
+            setInterval(() => {
+
+                msgIndex =
+                    (msgIndex + 1) %
+                    PROCESSING_MESSAGES.length;
+
+                resizeBtn.querySelector(
+                    "span:nth-child(2)"
+                ).textContent =
+                    PROCESSING_MESSAGES[msgIndex];
+
+            }, 700);
+
+        mediaPanel.classList.add(
+            "is-processing"
+        );
+
+        downloadBtn.disabled = true;
+
+        await wait(200);
+
+        // DIMENSIONS
+
+        let targetWidth =
+            state.originalImage.width;
+
+        let targetHeight =
+            state.originalImage.height;
+
+        if (
+            elements.customControls.classList.contains(
+                "active"
+            )
+        ) {
+
+            targetWidth =
+                parseInt(
+                    elements.widthInput.value
+                ) || targetWidth;
+
+            targetHeight =
+                parseInt(
+                    elements.heightInput.value
+                ) || targetHeight;
+        }
+
+        // CANVAS
+
+        const canvas =
+            document.createElement("canvas");
+
+        canvas.width = targetWidth;
+
+        canvas.height = targetHeight;
+
+        const ctx =
+            canvas.getContext("2d", {
+                alpha: false
+            });
+
+        ctx.imageSmoothingEnabled = true;
+
+        ctx.imageSmoothingQuality = "high";
+
+        ctx.drawImage(
+            state.originalImage,
+            0,
+            0,
+            targetWidth,
+            targetHeight
+        );
+
+        const mimeType =
+
+            state.currentFile.type ===
+            "image/png"
+
+            && !state.currentTargetKB
+
+                ? "image/png"
+
+                : "image/jpeg";
+
+        let finalBlob;
+
+        if (state.currentTargetKB) {
+
+            finalBlob =
+                await compressImage({
+
+                    canvas,
+
+                    mimeType,
+
+                    targetKB:
+                        state.currentTargetKB,
+
+                    width:
+                        targetWidth,
+
+                    height:
+                        targetHeight
+                });
+
+        } else {
+
+            finalBlob =
+                await getCanvasBlob(
+                    canvas,
+                    mimeType,
+                    0.95
+                );
+        }
+
+        revokeBlobURL();
+
+        state.finalBlob = finalBlob;
+
+        state.finalBlobUrl =
+            URL.createObjectURL(finalBlob);
+
+        elements.imgAfter.src =
+            state.finalBlobUrl;
+
+        elements.sizeAfter.textContent =
+            formatKB(finalBlob.size);
+
+        elements.imgAfter.style.opacity =
+            "1";
+
+        elements.sliderLine.style.display =
+            "flex";
+
+        elements.badgeAfter.style.display =
+            "flex";
+
+        elements.sliderInput.value = 50;
+
+        elements.sliderLine.style.left =
+            "50%";
+
+        elements.imgAfter.style.clipPath =
+            `polygon(
+                0 0,
+                50% 0,
+                50% 100%,
+                0 100%
+            )`;
+
+        clearInterval(interval);
+
+        resizeBtn.querySelector(
+            "span:nth-child(2)"
+        ).textContent = "Completed";
+
+        mediaPanel.classList.remove(
+            "is-processing"
+        );
+
+        downloadBtn.disabled = false;
+
+        const totalTime =
+            (
+                performance.now() -
+                startTime
+            ).toFixed(0);
+
+        console.log(
+            `Resize completed in ${totalTime}ms`
+        );
+
+        vibrate(15);
+
+        await wait(1200);
+
+        setButtonLoading(
+            resizeBtn,
+            false
+        );
+
+        state.isProcessing = false;
+    }
+);
+
+// =========================================
+// DOWNLOAD
+// =========================================
+
+elements.downloadBtn.addEventListener(
+    "click",
+    () => {
+
+        if (!state.finalBlobUrl)
+            return;
+
+        const a =
+            document.createElement("a");
+
+        const extension =
+            state.finalBlob.type.includes(
+                "png"
+            )
+                ? "png"
+                : "jpg";
+
+        a.href =
+            state.finalBlobUrl;
+
+        a.download =
+            `ResizeStudio_${
+                Date.now()
+            }.${extension}`;
+
+        a.click();
+
+        vibrate(8);
+    }
+);
+
+// =========================================
+// WELCOME MODAL
+// =========================================
+
+document.addEventListener(
+    "DOMContentLoaded",
+    () => {
+
+        const hasVisited =
+            localStorage.getItem(
+                "resizeStudio_welcomed"
+            );
+
+        if (!hasVisited) {
+
+            setTimeout(() => {
+
+                elements.welcomeModal.classList.add(
+                    "open"
+                );
+
+            }, 700);
+        }
+
+        elements.getStartedBtn
+            ?.addEventListener(
+                "click",
+                () => {
+
+                    elements.welcomeModal.classList.remove(
+                        "open"
+                    );
+
+                    localStorage.setItem(
+                        "resizeStudio_welcomed",
+                        "true"
+                    );
+                }
+            );
+    }
+);
+
+// =========================================
+// CLEANUP
+// =========================================
+
+window.addEventListener(
+    "beforeunload",
+    revokeBlobURL
+);
